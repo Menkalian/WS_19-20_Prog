@@ -1,0 +1,3 @@
+Philipp: Main Methode - Datei einlesen (Teilaufgabe c,)
+Benedikt: Seidel-Gauss Algorithmus
+Kilian: Jacobi Algorithmus und main Methode (Abfragen)
