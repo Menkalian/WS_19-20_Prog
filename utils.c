@@ -1,6 +1,6 @@
 #include "utils.h"
 
-bool load(const char *filename, Matrix *A, Vector *b, Vector *x) {
+bool loadTest(const char *filename, Matrix *A, Vector *b, Vector *x) {
     // Fill in Test Values
     /*
      * TEST DATA:
