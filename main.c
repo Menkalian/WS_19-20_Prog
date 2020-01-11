@@ -4,6 +4,7 @@
 Vector *solve(Method method, Matrix *A, Vector *b, Vector *x, double e);
 Vector *solveJ(Matrix *A, Vector *b, Vector *x, double e, int n);  // JACOBI
 Vector *solveGS(Matrix *A, Vector *b, Vector *x, double e); // GAUSS_SEIDEL
+double calculateScalar(Vector* vector, Vector* x);
 
 int main() {
     // Init Variables
@@ -88,7 +89,6 @@ Vector *solve(Method method, Matrix *A, Vector *b, Vector *x, double e) {
     if (method == JACOBI) {
         toRet = solveJ(A, b, x, e, 0);
     } else { // == GAUSS_SEIDEL
-        printf("GAUSS_SEIDEL noch nicht implementiert!");
         toRet = solveGS(A, b, x, e);
     }
     return toRet;
@@ -135,5 +135,42 @@ Vector *solveJ(Matrix *A, Vector *b, Vector *x, double e, int n) {
 }
 
 Vector *solveGS(Matrix *A, Vector *b, Vector *x, double e) {
-    return NULL;
+
+    static int iterationsCounter = 0;
+    Vector lastX = x[0];
+    Vector xNew;
+    xNew.n = (*b).n;
+    xNew.data = malloc((*b).n * sizeof(double));
+
+    // Copy pointer
+    Vector* newX = (Vector*) malloc((iterationsCounter + 1)*sizeof(Vector));
+    for (int i = 1; i < (iterationsCounter + 1); i++) {
+        newX[i] = x[i - 1];
+    }
+
+    // Calcualte new x vector
+    for (int i = 0; i < x->n; i++) {
+        // Transform row of matrix into vector
+        Vector matrixLine = {x->n, A->data[i]};
+        // Calculate new vector values
+        double newComponent = lastX.data[i] - (1 / A->data[i][i])
+              * (calculateScalar(&matrixLine, &lastX) - b->data[i]);
+        xNew.data[i] = newComponent;
+    }
+
+    // Set new vector as first vectors
+    newX[0] = xNew;
+
+    // Ermitteln der Abweichung
+    bool fehlerWertIstKleiner = vectorDistance(lastX, xNew) > e;
+
+    if (fehlerWertIstKleiner && iterationsCounter < 100) {
+        free(x); // Free the last x pointer on RAM
+        x = newX; // Set newX as x for recursive call
+        iterationsCounter++;
+        solveGS(A, b, newX, e); // Recursive call
+    } else {
+        // Return results
+        return newX;
+    }
 }
