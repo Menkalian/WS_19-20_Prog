@@ -90,3 +90,12 @@ void vectorPrint(Vector v) {
     }
     printf("}\n");
 }
+
+double calculateScalar(Vector* vector, Vector* x) {
+  // Berechnung des Skalarprodukts
+  double scalar = 0;
+  for (int i = 0; i < x->n; i++) {
+    scalar += vector->data[i] * x->data[i];
+  }
+  return scalar;
+}
