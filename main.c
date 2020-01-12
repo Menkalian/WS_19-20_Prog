@@ -161,16 +161,12 @@ Vector *solveGS(Matrix *A, Vector *b, Vector *x, double e) {
     // Set new vector as first vectors
     newX[0] = xNew;
 
-    // Ermitteln der Abweichung
-    bool fehlerWertIstKleiner = vectorDistance(lastX, xNew) > e;
-
-    if (fehlerWertIstKleiner && iterationsCounter < 100) {
+    if (vectorDistance(lastX, xNew) <= e) {
+        return newX;
+    } else {
         free(x); // Free the last x pointer on RAM
         x = newX; // Set newX as x for recursive call
         iterationsCounter++;
-        solveGS(A, b, newX, e); // Recursive call
-    } else {
-        // Return results
-        return newX;
+        return solveGS(A, b, newX, e);
     }
 }
