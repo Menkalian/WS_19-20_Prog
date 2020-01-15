@@ -91,11 +91,13 @@ void vectorPrint(Vector v) {
     printf("}\n");
 }
 
-double calculateScalar(Vector* vector, Vector* x) {
+double calculateScalar(Vector* vector, Vector* x, int withOut) {
   // Berechnung des Skalarprodukts
   double scalar = 0;
   for (int i = 0; i < x->n; i++) {
-    scalar += vector->data[i] * x->data[i];
+    if (i != withOut) {
+      scalar += vector->data[i] * x->data[i];
+    }
   }
   return scalar;
 }
