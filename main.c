@@ -4,7 +4,7 @@
 Vector *solve(Method method, Matrix *A, Vector *b, Vector *x, double e);
 Vector *solveJ(Matrix *A, Vector *b, Vector *x, double e, int n);  // JACOBI
 Vector *solveGS(Matrix *A, Vector *b, Vector *x, double e); // GAUSS_SEIDEL
-double calculateScalar(Vector* vector, Vector* x);
+double calculateScalar(Vector* vector, Vector* x, int withOut);
 
 int main() {
     // Init Variables
@@ -64,7 +64,8 @@ int main() {
     if (c == 'j' || c == 'J') {
         // Count through the results until we hit the starting Vector to determine the amount of steps
         int number = 0;
-        while (!vectorCompare(x, &result[number]))
+        //while (result[number].n == x->n)
+        while(!vectorCompare(x, &result[number]))
             number++;
 
         // PRINT ALL
@@ -81,6 +82,15 @@ int main() {
         printf("Das Ergebnis ist: \n");
         vectorPrint(result[0]);
     }
+
+    for (int i = 0; i < A->n; i++)
+      free(A->data[i]);
+
+    free(filename);
+    free(x);
+    free(b);
+    free(result);
+
     return 0;
 }
 
@@ -136,11 +146,7 @@ Vector *solveJ(Matrix *A, Vector *b, Vector *x, double e, int n) {
 
 Vector *solveGS(Matrix *A, Vector *b, Vector *x, double e) {
 
-    static int iterationsCounter = 0;
-    Vector lastX = x[0];
-    Vector xNew;
-    xNew.n = (*b).n;
-    xNew.data = malloc((*b).n * sizeof(double));
+    static int iterationsCounter = 1;
 
     // Copy pointer
     Vector* newX = (Vector*) malloc((iterationsCounter + 1)*sizeof(Vector));
@@ -148,25 +154,32 @@ Vector *solveGS(Matrix *A, Vector *b, Vector *x, double e) {
         newX[i] = x[i - 1];
     }
 
+    // Copying last x[1] to x[0]
+    newX[0].data = (double*) malloc(b->n * sizeof(double));
+    for (int i = 0; i < b->n; i++)
+      newX[0].data[i] = newX[1].data[i];
+
+    newX[0].n = b->n;
+
     // Calcualte new x vector
-    for (int i = 0; i < x->n; i++) {
-        // Transform row of matrix into vector
-        Vector matrixLine = {x->n, A->data[i]};
-        // Calculate new vector values
-        double newComponent = lastX.data[i] - (1 / A->data[i][i])
-              * (calculateScalar(&matrixLine, &lastX) - b->data[i]);
-        xNew.data[i] = newComponent;
+    for (int i = 0; i < b->n; i++) {
+      // Generating vector to create scalar product
+      Vector k = {b->n, A->data[i]};
+
+      // Calculating new x vector element
+      double newValue = 1 / A->data[i][i];
+      double s = b->data[i];
+      s -= calculateScalar(&k, &newX[0], i);
+      newX[0].data[i] = newValue * s;
     }
 
-    // Set new vector as first vectors
-    newX[0] = xNew;
+    // Iterate and free last x vector
+    free(x);
+    iterationsCounter++;
 
-    if (vectorDistance(lastX, xNew) <= e) {
+    if (vectorDistance(newX[1], newX[0]) <= e || iterationsCounter > 100) {
         return newX;
     } else {
-        free(x); // Free the last x pointer on RAM
-        x = newX; // Set newX as x for recursive call
-        iterationsCounter++;
         return solveGS(A, b, newX, e);
     }
 }
