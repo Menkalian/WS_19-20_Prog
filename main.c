@@ -2,8 +2,9 @@
 
 // Solving Methods
 Vector *solve(Method method, Matrix *A, Vector *b, Vector *x, double e);
-Vector *solveJ(Matrix *A, Vector *b, Vector *x, double e, int n);  // JACOBI
-Vector *solveGS(Matrix *A, Vector *b, Vector *x, double e); // GAUSS_SEIDEL
+void solveJ(Matrix *A, Vector *b, Vector *newX, Vector *oldX);  // JACOBI
+void solveGS(Matrix *A, Vector *b, Vector *x, Vector *oldX); // GAUSS_SEIDEL
+Vector* calculateLGS(Matrix* A, Vector* b, Vector* x, double e, void (*f)(Matrix*, Vector*, Vector*, Vector*));
 double calculateScalar(Vector* vector, Vector* x, int withOut);
 
 int main() {
@@ -64,13 +65,13 @@ int main() {
     if (c == 'j' || c == 'J') {
         // Count through the results until we hit the starting Vector to determine the amount of steps
         int number = 0;
-        //while (result[number].n == x->n)
-        while(!vectorCompare(x, &result[number]))
+        while (result[number].n == b->n)
             number++;
 
+        number--;
         // PRINT ALL
         printf("Die Iterationsschritte sind: \n");
-        for (int i = 0; i <= number; ++i) {
+        for (int i = 1; i <= number; ++i) {
             printf("%d)\t", i);
             vectorPrint(result[number - i]);
         }
@@ -83,11 +84,12 @@ int main() {
         vectorPrint(result[0]);
     }
 
+    // Free all pointer
     for (int i = 0; i < A->n; i++)
       free(A->data[i]);
 
+    free(A);
     free(filename);
-    free(x);
     free(b);
     free(result);
 
@@ -96,71 +98,29 @@ int main() {
 
 Vector *solve(Method method, Matrix *A, Vector *b, Vector *x, double e) {
     Vector *toRet;
-    if (method == JACOBI) {
-        toRet = solveJ(A, b, x, e, 0);
+
+    if (method == JACOBI) { // == JACOBI
+        toRet = calculateLGS(A, b, x, e, solveJ);
     } else { // == GAUSS_SEIDEL
-        toRet = solveGS(A, b, x, e);
+        toRet = calculateLGS(A, b, x, e, solveGS);
     }
     return toRet;
 }
 
-Vector *solveJ(Matrix *A, Vector *b, Vector *x, double e, int n) {
-    if (n >= 100) // End Rekursion
-        return x;
-
-    Vector *toRet = malloc((n + 1) * sizeof(Vector));
-
-    Vector *start = x; // Index 0 is the latest Result, so Array Indexing is not needed
-
-    // Jacobi uses b as base to calculate the next Iteration. So b gets copied to the result first.
-    Vector res;
-    res.data = malloc(b->n * sizeof(double));
-    for (int i = 0; i < b->n; ++i) { // copy the vector. NOT only the pointer
-        res.data[i] = b->data[i];
-    }
-    res.n = b->n;
-    Vector *result = &res;
-
+void solveJ(Matrix *A, Vector *b, Vector *newX, Vector *oldX) {
     // Transform "result" to get the next Vector
     for (int i = 0; i < A->n; ++i) {
-        for (int j = 0; j < A->n; ++j) {
-            if (j != i) {
-                result->data[i] -= A->data[i][j] * start->data[j];
-            }
-        }
-        result->data[i] /= A->data[i][i];
-    }
+      // Generating vector to create scalar product
+      Vector k = {b->n, A->data[i]};
 
-    // Build Array toRet
-    toRet[0] = *result;
-    for (int i = 1; i <= n + 1; ++i)
-        toRet[i] = x[i - 1];
-
-    // Continue Calculation or return
-    if (vectorDistance(*start, *result) <= e) {
-        return toRet;
-    } else {
-        return solveJ(A, b, toRet, e, n + 1);
+      // Calculating new x vector element
+      double newValue = 1 / A->data[i][i];
+      newX->data[i] = newValue * (b->data[i]
+         - calculateScalar(&k, oldX, i));
     }
 }
 
-Vector *solveGS(Matrix *A, Vector *b, Vector *x, double e) {
-
-    static int iterationsCounter = 1;
-
-    // Copy pointer
-    Vector* newX = (Vector*) malloc((iterationsCounter + 1)*sizeof(Vector));
-    for (int i = 1; i < (iterationsCounter + 1); i++) {
-        newX[i] = x[i - 1];
-    }
-
-    // Copying last x[1] to x[0]
-    newX[0].data = (double*) malloc(b->n * sizeof(double));
-    for (int i = 0; i < b->n; i++)
-      newX[0].data[i] = newX[1].data[i];
-
-    newX[0].n = b->n;
-
+void solveGS(Matrix *A, Vector *b, Vector *x, Vector *oldX) {
     // Calcualte new x vector
     for (int i = 0; i < b->n; i++) {
       // Generating vector to create scalar product
@@ -168,18 +128,39 @@ Vector *solveGS(Matrix *A, Vector *b, Vector *x, double e) {
 
       // Calculating new x vector element
       double newValue = 1 / A->data[i][i];
-      double s = b->data[i];
-      s -= calculateScalar(&k, &newX[0], i);
-      newX[0].data[i] = newValue * s;
+      x->data[i] = newValue * (b->data[i]
+         - calculateScalar(&k, x, i));
     }
+}
 
-    // Iterate and free last x vector
-    free(x);
-    iterationsCounter++;
+Vector* calculateLGS(Matrix* A, Vector* b, Vector* x, double e,
+  void (*f)(Matrix*, Vector*, Vector*, Vector*)) {
+  // Create counter variable
+  static int iterationsCounter = 1;
 
-    if (vectorDistance(newX[1], newX[0]) <= e || iterationsCounter > 100) {
-        return newX;
-    } else {
-        return solveGS(A, b, newX, e);
-    }
+  // Copy pointer
+  Vector* newX = (Vector*) malloc((iterationsCounter + 1) * sizeof(Vector));
+  for (int i = 1; i < (iterationsCounter + 1); i++) {
+      newX[i] = x[i - 1];
+  }
+  size_t dataLength = sizeof(double) * b->n;
+  newX[0].n = b->n;
+  newX[0].data = (double*) malloc(dataLength);
+  memcpy(newX[0].data, newX[1].data, dataLength);
+
+  // Free old x
+  free(x);
+  x = newX;
+
+  // Calculating new x vector
+  f(A, b, &newX[0], &newX[1]);
+
+  // Increment counter and free last x vector
+  iterationsCounter++;
+
+  // Check vector distance
+  if (!(vectorDistance(newX[1], newX[0]) <= e || iterationsCounter > 100)) {
+      return calculateLGS(A, b, newX, e, f);
+  }
+  return newX;
 }
