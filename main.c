@@ -62,19 +62,21 @@ int main() {
     scanf("%c", &c);
     while (getchar() != '\n');
 
-    if (c == 'j' || c == 'J') {
-        // Count through the results until we hit the starting Vector to determine the amount of steps
-        int number = 0;
-        while (result[number].n == b->n)
-            number++;
+    int number = 0;
+    // Count through the results until we hit the starting Vector to determine the amount of steps
+    while (result[number].n == b->n)
+        number++;
 
-        number--;
+    number--;
+
+    if (c == 'j' || c == 'J') {
         // PRINT ALL
         printf("Die Iterationsschritte sind: \n");
         for (int i = 1; i <= number; ++i) {
             printf("%d)\t", i);
             vectorPrint(result[number - i]);
         }
+
     } else {
         if (c != 'n' && c != 'N')
             printf("Keine Gültige Angabe. Es wird NEIN als Antwort angenommen.\n");
@@ -83,6 +85,10 @@ int main() {
         printf("Das Ergebnis ist: \n");
         vectorPrint(result[0]);
     }
+
+    // Free all data pointer of Vector Variables
+    for (int i = 0; i < number; i++)
+      free(result[i].data);
 
     // Free all pointer
     for (int i = 0; i < A->n; i++)
