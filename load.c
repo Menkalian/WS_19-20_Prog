@@ -1,5 +1,13 @@
 #include "utils.h"
 
+/*
+ * This method calculates the solution for the LGS. calls itself in a recursion
+ * @param *filename: name/path of the .csv file to load
+ * @param @out *A: matrix with the left-hand-side values of the LGS
+ * @param @out *b: vector with the right-hand-side values of the LGS
+ * @param @out *x: vector with the start values for the LGS
+ * @return: true if successful, false if any error occurred
+ */
 bool load(const char *filename, Matrix *A, Vector *b, Vector *x) {
 
     //convert Windows data path
@@ -22,7 +30,7 @@ bool load(const char *filename, Matrix *A, Vector *b, Vector *x) {
     FILE *fp;
     fp = fopen(filename, "r");
 
-    if(fp == NULL){
+    if (fp == NULL) {
         printf("Datei konnte nicht geoeffnet werden\n");
         return false;
     }
@@ -39,7 +47,7 @@ bool load(const char *filename, Matrix *A, Vector *b, Vector *x) {
     bool firstLine = true;
     bool lineWithData = false;
 
-    while (temp != EOF){
+    while (temp != EOF) {
 
         temp = fgetc(fp);
 
@@ -164,5 +172,5 @@ bool load(const char *filename, Matrix *A, Vector *b, Vector *x) {
 
     fclose(fp);
 
-return true;
+    return true;
 }
