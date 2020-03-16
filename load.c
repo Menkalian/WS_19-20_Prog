@@ -35,63 +35,15 @@ bool load(const char *filename, Matrix *A, Vector *b, Vector *x) {
         return false;
     }
 
-    /*
-     * count lines and columns
-     * verify that data is valid
-     */
+    bool startVectExists;
+    int columns, lines;
 
-    int lines = 0;
-    int columns = 0;
-    int prevcolumns = 0;
-    int temp = 0;
-    bool firstLine = true;
-    bool lineWithData = false;
+    bool countSuccess = coVal(filename, &lines, &startVectExists);
 
-    while (temp != EOF) {
+    if (!countSuccess) return false;
 
-        temp = fgetc(fp);
-
-        if (temp == ',') {
-
-            columns++;
-            lineWithData = true;
-
-        } else if (temp == '\n' && lineWithData == true) {
-
-            lines++;
-            lineWithData = false;
-
-            if (firstLine == true) {
-
-                prevcolumns = columns;
-                columns = 0;
-                firstLine = false;
-            } else if (prevcolumns != columns) {
-
-                printf("Daten ungueltig\n");
-                return false;
-            } else columns = 0; //end if
-        }//end if
-    }//end while
-
-    //necessary if there is no word wrap at end of file
-    if (lineWithData == true) {
-
-        lines++;
-
-        if (prevcolumns != columns) {
-
-            printf("Daten ungueltig\n");
-            return false;
-        } //end if
-    }//end if
-
-    columns = prevcolumns + 1;
-    if (lines + 1 != columns && lines + 2 != columns) {
-
-        printf("Daten ungueltig\n");
-        return false;
-    }
+    if (startVectExists) columns = lines + 2;
+    else columns = lines + 1;
 
     /*
      * init matrix
@@ -113,7 +65,7 @@ bool load(const char *filename, Matrix *A, Vector *b, Vector *x) {
      */
 
     //go to beginning of file
-    fseek(fp, 0, SEEK_SET);
+    //fseek(fp, 0, SEEK_SET);
 
     //go through file
     for (int z = 0; z < lines; z++) {
@@ -172,5 +124,68 @@ bool load(const char *filename, Matrix *A, Vector *b, Vector *x) {
 
     fclose(fp);
 
+    return true;
+}
+
+/*
+ * This method counts the lines and columns of the LGS.
+ * Empty lines are ignored.
+ * It also tests if the LGS has a correct form.
+ * @param *filename: name/path of the .csv file to load
+ * @param *columns: number of columns of the LGS
+ * @param *startVectExists: true if the start values are specified, false if not
+ * @return: true if successful, false if any error occurred
+ */
+bool coVal (const char *filename, int *lines, bool *startVectExists) {
+
+    FILE *fpc;
+    fpc = fopen(filename, "r");
+
+    if (fpc == NULL) {
+        return false;
+    }
+
+    int cLines = 0, cColumns = 0, prevColumns = 0;
+    int temp = 0;
+    bool firstLine = true, firstCommaInLine = true;
+
+    while (temp != EOF) {
+
+        temp = fgetc(fpc);
+
+        if (temp == ',') {
+
+            cColumns++;
+            //only count line if there is at least one comma in it
+            if (firstCommaInLine == true) {
+                cLines++;
+                firstCommaInLine = false;
+            }//end if
+
+        } else if ( (temp == '\n' || temp == EOF) && cColumns != 0) {
+
+            firstCommaInLine = true;
+            //there is one more column then commas
+            cColumns++;
+            if (firstLine == true) {
+
+                prevColumns = cColumns;
+                cColumns = 0;
+                firstLine = false;
+            } else if (prevColumns != cColumns) {
+
+                printf("Daten ungueltig\n");
+                return false;
+            } else cColumns = 0; //end if
+        }//end if
+    }//end while
+
+    fclose(fpc);
+
+    if (cLines + 1 == prevColumns) *startVectExists = false;
+    else if (cLines + 2 == prevColumns) *startVectExists = true;
+    else return false;
+
+    *lines = cLines;
     return true;
 }
