@@ -36,19 +36,13 @@ bool load(const char *filename, Matrix *A, Vector *b, Vector *x) {
     }
 
     bool startVectExists;
-    int columns, lines;
+    int lines;
 
     bool countSuccess = coVal(filename, &lines, &startVectExists);
 
     if (!countSuccess) return false;
 
-    if (startVectExists) columns = lines + 2;
-    else columns = lines + 1;
-
-    /*
-     * init matrix
-     */
-
+    //init matrix
     double **matrix = malloc(lines * sizeof(double *));
 
     for (int i = 0; i < lines; i++) {
@@ -68,56 +62,38 @@ bool load(const char *filename, Matrix *A, Vector *b, Vector *x) {
     //fseek(fp, 0, SEEK_SET);
 
     //go through file
-    for (int z = 0; z < lines; z++) {
+    for (int i1 = 0; i1 < lines; i1++) {
         double tempData = 0;
-        int nextChar = 0;
 
         //save xCoefficients
-        for (int s = 0; s < lines; s++) {
+        for (int i2 = 0; i2 < lines; i2++) {
 
             fscanf(fp, "%lf", &tempData);
-
-            //ignore whitespaces
-            do {
-                nextChar = fgetc(fp);
-            } while (nextChar != ',');
-
-            matrix[z][s] = tempData;
+            matrix[i1][i2] = tempData;
             tempData = 0;
-        }
+
+            nextSepChar(fp);
+        }//end for
 
         //save solutions
         fscanf(fp, "%lf", &tempData);
-        solutions[z] = tempData;
+        solutions[i1] = tempData;
         tempData = 0;
 
-        //save starting Vectors if existing
-        if (columns == lines + 2) {
+        nextSepChar(fp);
 
-            //ignore whitespaces and word wrap
-            do {
-                nextChar = fgetc(fp);
-            } while (nextChar != ',' && nextChar != '\n' && nextChar != EOF);
+        //save starting Vectors if existing
+        if (startVectExists) {
 
             fscanf(fp, "%lf", &tempData);
-            startVect[z] = tempData;
+            startVect[i1] = tempData;
             tempData = 0;
 
-        } else {
+            nextSepChar(fp);
+        } else startVect[i1] = 0;//end if
+    }//end for
 
-            startVect[z] = 0;
-        }
-
-        //ignore whitespaces and word wrap
-        do {
-            nextChar = fgetc(fp);
-        } while (nextChar != ',' && nextChar != '\n' && nextChar != EOF);
-    }
-
-    /*
-     * Assign the values
-     */
-
+    //assign data
     *A = (Matrix) {.n = lines, .data =  matrix};
     *b = (Vector) {.n = lines, .data = solutions};
     *x = (Vector) {.n = lines, .data = startVect};
@@ -188,4 +164,19 @@ bool coVal (const char *filename, int *lines, bool *startVectExists) {
 
     *lines = cLines;
     return true;
+}
+
+/*
+ * This method gets the next seperating char (',' ; '\n' ; EOF) in the file.
+ * @param *fpn: FILE Pointer to the file containing the LGS
+ * @return void
+ */
+void nextSepChar(FILE *fpn) {
+    char temp;
+
+    do {
+        temp = fgetc(fpn);
+    } while (temp != ',' && temp != '\n' && temp != EOF);
+
+    return;
 }
