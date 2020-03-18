@@ -20,93 +20,125 @@ int main() {
     Vector *x = malloc(sizeof(Vector));             // x is a pointer to the start values
     Method method = 0;
     double margin = -1.0; // Margin of error
+    bool ask = false;
 
-    // Read in the values
-    printf("Bitte den Namen der CSV-Datein angeben: ");
-    scanf("%s", filename);
-    while (getchar() != '\n'); // Clear the input buffer
-    bool success = load(filename, A, b, x);
-    printf("%s wurde %serfolgreich eingelesen!\n\n", filename, success ? "" : "nicht ");
+    do { // Loop for retrying on error
+        if (ask) {
+            // Asking wether to start a new calculation
+            char c = '0';
+            while (c != 'j' && c != 'J' && c != 'n' && c != 'N') {
+                printf("Soll eine neue Berechnung gestartet werden? (j/n) ");
+                scanf("%c", &c);
+                while (getchar() != '\n');
 
-    // Abort if not successfull
-    if (!success) {
-        printf("Das Programm wird jetzt beendet!\n");
-        return 1;
-    }
+                if (c == 'j' || c == 'J')
+                    printf("Neue Berechnung wird gestartet...\n");
+                else if (c == 'n' || c == 'N') {
+                    printf("Das Programm wird beendet.\n");
+                } else
+                    printf("Diese Eingabe ist ungültig.\n");
+            }
+            break;
+        } else {
+            ask = true;
+        }
 
-    // Asking which method to use
-    char c = '0';
-    while (c != 'j' && c != 'J' && c != 'g' && c != 'G') {
-        printf("Soll das Gleichungssystem mit dem (J)acobi-Verfahren oder mit dem (G)auss-Seidel-Verfahren bearbeitet werden? ");
+        // Read in the values
+        printf("Bitte den Namen der CSV-Datein angeben: ");
+        scanf("%s", filename);
+        while (getchar() != '\n'); // Clear the input buffer
+        bool success = load(filename, A, b, x);
+        printf("%s wurde %serfolgreich eingelesen!\n\n", filename, success ? "" : "nicht ");
+
+        // Abort if not successfull
+        if (!success) {
+            printf("Die Berechung wird abgebrochen!\n");
+            continue;
+        }
+
+        // Asking which method to use
+        char c = '0';
+        while (c != 'j' && c != 'J' && c != 'g' && c != 'G') {
+            printf("Soll das Gleichungssystem mit dem (J)acobi-Verfahren oder mit dem (G)auss-Seidel-Verfahren bearbeitet werden? ");
+            scanf("%c", &c);
+            while (getchar() != '\n');
+
+            if (c == 'j' || c == 'J')
+                method = JACOBI;
+            else if (c == 'g' || c == 'G')
+                method = GAUSS_SEIDEL;
+            else
+                printf("Diese Eingabe ist ungültig.\n");
+        }
+
+        // Asking for the margin of error
+        while (margin < 0) {
+            printf("\nBei welcher Genauigkeit soll die Berechnung beendet werden? ");
+            scanf("%lf", &margin);
+            while (getchar() != '\n');
+            if (margin < 0)
+                printf("Diese Eingabe ist ungültig! Bitte eine Zahl > 0 eingeben.\n");
+        }
+
+        // Start the calculation
+        printf("\nDie Berechnung für die Werte aus \"%s\" wird begonnen. Das Gewählte Verfahren ist das %s-Verfahren. "
+               "Die Berechnung wird bei einem Fehlerwert von weniger als %.10lf beendet.\n",
+               filename, method ? "Gauss-Seidel" : "Jacobi", margin);
+        Vector *result = solve(method, A, b, x, margin);
+        printf("\n***Die Berechnung wurde beendet!***\n\n\n");
+
+        if (result[0].n < 1) {
+            // error occured -> Abort
+            printf("Ein Fehler ist während der Berechnung aufgetreten. Die Berechnung wird abgebrochen!\n");
+            continue;
+        }
+
+        // Ausgabewunsch abfragen
+        printf("Sollen alle Iterationsschritte angezeigt werden? (j/n) ");
         scanf("%c", &c);
         while (getchar() != '\n');
 
-        if (c == 'j' || c == 'J')
-            method = JACOBI;
-        else if (c == 'g' || c == 'G')
-            method = GAUSS_SEIDEL;
-        else
-            printf("Diese Eingabe ist ungültig.\n");
-    }
+        int number = 0;
+        // Count through the results until we hit an invalid Vector to determine the amount of steps
+        while (result[number].n == b->n)
+            number++;
 
-    // Asking for the margin of error
-    while (margin < 0) {
-        printf("\nBei welcher Genauigkeit soll die Berechnung beendet werden? ");
-        scanf("%lf", &margin);
-        while (getchar() != '\n');
-        if (margin < 0)
-            printf("Diese Eingabe ist ungültig! Bitte eine Zahl > 0 eingeben.\n");
-    }
+        // When we hit an invalid vector we are to far, so go back a step.
+        number--;
 
-    // Start the calculation
-    printf("\nDie Berechnung für die Werte aus \"%s\" wird begonnen. Das Gewählte Verfahren ist das %s-Verfahren. "
-           "Die Berechnung wird bei einem Fehlerwert von weniger als %.10lf beendet.\n",
-           filename, method ? "Gauss-Seidel" : "Jacobi", margin);
-    Vector *result = solve(method, A, b, x, margin);
-    printf("\n***Die Berechnung wurde beendet!***\n\n\n");
+        if (c == 'j' || c == 'J') {
+            // PRINT ALL
+            printf("Die Iterationsschritte sind: \n");
+            for (int i = 1; i <= number; ++i) {
+                printf("%d)\t", i);
+                vectorPrint(result[number - i]);
+            }
 
-    // Ausgabewunsch abfragen
-    printf("Sollen alle Iterationsschritte angezeigt werden? (j/n) ");
-    scanf("%c", &c);
-    while (getchar() != '\n');
+        } else {
+            if (c != 'n' && c != 'N')
+                printf("Keine Gültige Angabe. Es wird NEIN als Antwort angenommen.\n");
 
-    int number = 0;
-    // Count through the results until we hit an invalid Vector to determine the amount of steps
-    while (result[number].n == b->n)
-        number++;
-
-    // When we hit an invalid vector we are to far, so go back a step.
-    number--;
-
-    if (c == 'j' || c == 'J') {
-        // PRINT ALL
-        printf("Die Iterationsschritte sind: \n");
-        for (int i = 1; i <= number; ++i) {
-            printf("%d)\t", i);
-            vectorPrint(result[number - i]);
+            // Just print the final result
+            printf("Das Ergebnis ist: \n");
+            vectorPrint(result[0]);
         }
 
-    } else {
-        if (c != 'n' && c != 'N')
-            printf("Keine Gültige Angabe. Es wird NEIN als Antwort angenommen.\n");
+        // Free all data pointer of Vector Variables
+        for (int i = 0; i < number; i++)
+            free(result[i].data);
 
-        // Just print the final result
-        printf("Das Ergebnis ist: \n");
-        vectorPrint(result[0]);
-    }
+        // Free all pointer
+        for (int i = 0; i < A->n; i++)
+            free(A->data[i]);
 
-    // Free all data pointer of Vector Variables
-    for (int i = 0; i < number; i++)
-        free(result[i].data);
+        free(result);
 
-    // Free all pointer
-    for (int i = 0; i < A->n; i++)
-        free(A->data[i]);
+        break;
+    } while (true);
 
     free(A);
     free(filename);
     free(b);
-    free(result);
 
     return 0;
 }
