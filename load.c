@@ -1,7 +1,7 @@
 #include "utils.h"
 
 /*
- * This method calculates the solution for the LGS. calls itself in a recursion
+ * This method loads data from a file containing a LGS and stores it in a matrix and two vectors
  * @param *filename: name/path of the .csv file to load
  * @param @out *A: matrix with the left-hand-side values of the LGS
  * @param @out *b: vector with the right-hand-side values of the LGS
@@ -129,7 +129,7 @@ bool coVal (const char *filename, int *lines, bool *startVectExists) {
 }
 
 /*
- * This method save the values of the LGS in a matrix and two vectors
+ * This method stores the values of the LGS in a matrix and two vectors
  * @param *fp: FILE Pointer of the file containing the LGS
  * @param lines: number of lines of the LGS
  * @param startVectExists: true if the LGS contains start values
@@ -144,7 +144,7 @@ bool loadData(FILE *fp, int lines, bool startVectExists, double **matrix, double
     //go through file
     for (int i1 = 0; i1 < lines; i1++) {
 
-        //save xCoefficients
+        //store xCoefficients
         for (int i2 = 0; i2 < lines; i2++) {
 
             fscanf(fp, "%lf", &tempData);
@@ -154,14 +154,14 @@ bool loadData(FILE *fp, int lines, bool startVectExists, double **matrix, double
             nextSepChar(fp);
         }//end for
 
-        //save solutions
+        //store solutions
         fscanf(fp, "%lf", &tempData);
         solutions[i1] = tempData;
         tempData = 0;
 
         nextSepChar(fp);
 
-        //save starting Vectors if existing
+        //store starting Vectors if existing
         if (startVectExists) {
 
             fscanf(fp, "%lf", &tempData);
