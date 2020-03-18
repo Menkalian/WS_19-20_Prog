@@ -170,7 +170,7 @@ bool loadData(FILE *fp, int lines, bool startVectExists, double **matrix, double
  * @return void
  */
 void nextSepChar(FILE *fpn) {
-    char temp;
+    int temp;
 
     do {
         temp = fgetc(fpn);
