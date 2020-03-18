@@ -52,44 +52,8 @@ bool load(const char *filename, Matrix *A, Vector *b, Vector *x) {
         matrix[i] = xCoefficients;
     }
 
-    /*
-     * load data
-     */
-
-    //go to beginning of file
-    //fseek(fp, 0, SEEK_SET);
-
-    //go through file
-    for (int i1 = 0; i1 < lines; i1++) {
-        double tempData = 0;
-
-        //save xCoefficients
-        for (int i2 = 0; i2 < lines; i2++) {
-
-            fscanf(fp, "%lf", &tempData);
-            matrix[i1][i2] = tempData;
-            tempData = 0;
-
-            nextSepChar(fp);
-        }//end for
-
-        //save solutions
-        fscanf(fp, "%lf", &tempData);
-        solutions[i1] = tempData;
-        tempData = 0;
-
-        nextSepChar(fp);
-
-        //save starting Vectors if existing
-        if (startVectExists) {
-
-            fscanf(fp, "%lf", &tempData);
-            startVect[i1] = tempData;
-            tempData = 0;
-
-            nextSepChar(fp);
-        } else startVect[i1] = 0;//end if
-    }//end for
+    bool loadSuccess = loadData(fp, lines, startVectExists, matrix, solutions, startVect);
+    if (!loadSuccess) return false;
 
     //assign data
     *A = (Matrix) {.n = lines, .data =  matrix};
@@ -161,6 +125,53 @@ bool coVal (const char *filename, int *lines, bool *startVectExists) {
     else return false;
 
     *lines = cLines;
+    return true;
+}
+
+/*
+ * This method save the values of the LGS in a matrix and two vectors
+ * @param *fp: FILE Pointer of the file containing the LGS
+ * @param lines: number of lines of the LGS
+ * @param startVectExists: true if the LGS contains start values
+ * @param **matrix: pointer to a matrix
+ * @param *solutions: pointer to a vector
+ * @param *startVect: pointer to a vector
+ * @return bool: true if succesful
+ */
+bool loadData(FILE *fp, int lines, bool startVectExists, double **matrix, double *solutions, double *startVect) {
+    double tempData = 0;
+
+    //go through file
+    for (int i1 = 0; i1 < lines; i1++) {
+
+        //save xCoefficients
+        for (int i2 = 0; i2 < lines; i2++) {
+
+            fscanf(fp, "%lf", &tempData);
+            matrix[i1][i2] = tempData;
+            tempData = 0;
+
+            nextSepChar(fp);
+        }//end for
+
+        //save solutions
+        fscanf(fp, "%lf", &tempData);
+        solutions[i1] = tempData;
+        tempData = 0;
+
+        nextSepChar(fp);
+
+        //save starting Vectors if existing
+        if (startVectExists) {
+
+            fscanf(fp, "%lf", &tempData);
+            startVect[i1] = tempData;
+            tempData = 0;
+
+            nextSepChar(fp);
+        } else startVect[i1] = 0;//end if
+    }//end for
+
     return true;
 }
 
