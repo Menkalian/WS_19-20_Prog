@@ -176,6 +176,4 @@ void nextSepChar(FILE *fpn) {
     do {
         temp = fgetc(fpn);
     } while (temp != ',' && temp != '\n' && temp != EOF);
-
-    return;
 }
