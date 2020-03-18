@@ -39,20 +39,18 @@ bool load(const char *filename, Matrix *A, Vector *b, Vector *x) {
     int lines;
 
     bool countSuccess = coVal(filename, &lines, &startVectExists);
-
     if (!countSuccess) return false;
 
     //init matrix
     double **matrix = malloc(lines * sizeof(double *));
+    double *solutions = malloc(lines * sizeof(double));
+    double *startVect = malloc(lines * sizeof(double));
 
     for (int i = 0; i < lines; i++) {
 
         double *xCoefficients = malloc(lines * sizeof(double));
         matrix[i] = xCoefficients;
     }
-
-    double *solutions = malloc(lines * sizeof(double));
-    double *startVect = malloc(lines * sizeof(double));
 
     /*
      * load data
