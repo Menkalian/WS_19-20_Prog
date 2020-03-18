@@ -10,22 +10,6 @@
  */
 bool load(const char *filename, Matrix *A, Vector *b, Vector *x) {
 
-    //convert Windows data path
-    char *c = strchr(filename, 92);
-    char fileExtension[] = ".csv";
-
-    while (c != NULL) {
-        *c = '/';
-        c = strchr(filename, 92);
-    }
-
-    //check file extension (.csv)
-    c = strstr(filename, fileExtension);
-    if (c == NULL) {
-        printf("%s ist keine CSV-Datei\n", filename);
-        return false;
-    }
-
     //open file
     FILE *fp;
     fp = fopen(filename, "r");
