@@ -1,5 +1,10 @@
 #include "utils.h"
 
+//Functions
+bool coVal(const char *filename, int *columns, bool *startVectExists);
+bool loadData(FILE *fp, int lines, bool startVectExists, double **matrix, double *solutions, double *startVect);
+void nextSepChar(FILE *fpn);
+
 /*
  * This method loads data from a file containing a LGS and stores it in a matrix and two vectors
  * @param *filename: name/path of the .csv file to load

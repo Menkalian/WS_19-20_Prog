@@ -24,8 +24,5 @@ typedef enum {
 
 // Functions
 bool load(const char *filename, Matrix *A, Vector *b, Vector *x);
-bool coVal(const char *filename, int *columns, bool *startVectExists);
-bool loadData(FILE *fp, int lines, bool startVectExists, double **matrix, double *solutions, double *startVect);
-void nextSepChar(FILE *fpn);
 double vectorDistance(Vector v1, Vector v2);
 void vectorPrint(Vector v);
