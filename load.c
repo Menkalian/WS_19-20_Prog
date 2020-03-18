@@ -119,6 +119,7 @@ bool coVal (const char *filename, int *lines, bool *startVectExists) {
 
 /*
  * This method stores the values of the LGS in a matrix and two vectors
+ * Empty values (',  ,') are ignored.
  * @param *fp: FILE Pointer of the file containing the LGS
  * @param lines: number of lines of the LGS
  * @param startVectExists: true if the LGS contains start values
