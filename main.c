@@ -31,14 +31,18 @@ int main() {
                 scanf("%c", &c);
                 while (getchar() != '\n');
 
-                if (c == 'j' || c == 'J')
+                if (c == 'j' || c == 'J') {
                     printf("Neue Berechnung wird gestartet...\n");
-                else if (c == 'n' || c == 'N') {
+                    ask = false;
+                } else if (c == 'n' || c == 'N') {
                     printf("Das Programm wird beendet.\n");
                 } else
                     printf("Diese Eingabe ist ungültig.\n");
             }
-            break;
+            if (ask)
+                break;
+            else
+                continue;
         } else {
             ask = true;
         }
