@@ -51,3 +51,40 @@ double calculateScalar(Vector *v1, Vector *v2, int indexToIgnore) {
     }
     return scalar;
 }
+
+int getListLength(ListElement* startElement) {
+  static int length = 0;
+  if (startElement->next != NULL) {
+    length++;
+    return getListLength(startElement->next);
+  } else {
+    return length;
+  }
+}
+
+ListElement* getLastListElement(ListElement* startElement) {
+  if (startElement->next != NULL) {
+    return getLastListElement(startElement->next);
+  } else {
+    return startElement;
+  }
+}
+
+void convertListToArray(Vector* vectorArray, ListElement* listStartElement,
+                        int length) {
+  ListElement* lastElement = getLastListElement(listStartElement);
+  for (int i = 0; i < length; i++) {
+    vectorArray[i].n = lastElement->vector.n;
+    vectorArray[i].data = (lastElement->vector).data;
+
+    lastElement = lastElement->last;
+    free(lastElement->next);
+  }
+}
+
+void deleteChainedList(ListElement* startElement) {
+  while (startElement->next != NULL) {
+    startElement = startElement->next;
+    free(startElement->last);
+  }
+}
