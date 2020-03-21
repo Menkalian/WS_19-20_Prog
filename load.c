@@ -1,7 +1,12 @@
 #include "utils.h"
 
+//Functions
+bool coVal(FILE *fpc, int *columns, bool *startVectExists);
+bool loadData(FILE *fp, int lines, bool startVectExists, double **matrix, double *solutions, double *startVect);
+void nextSepChar(FILE *fpn);
+
 /*
- * This method calculates the solution for the LGS. calls itself in a recursion
+ * This method loads data from a file containing a LGS and stores it in a matrix and two vectors
  * @param *filename: name/path of the .csv file to load
  * @param @out *A: matrix with the left-hand-side values of the LGS
  * @param @out *b: vector with the right-hand-side values of the LGS
@@ -9,22 +14,6 @@
  * @return: true if successful, false if any error occurred
  */
 bool load(const char *filename, Matrix *A, Vector *b, Vector *x) {
-
-    //convert Windows data path
-    char *c = strchr(filename, 92);
-    char fileExtension[] = ".csv";
-
-    while (c != NULL) {
-        *c = '/';
-        c = strchr(filename, 92);
-    }
-
-    //check file extension (.csv)
-    c = strstr(filename, fileExtension);
-    if (c == NULL) {
-        printf("%s ist keine CSV-Datei\n", filename);
-        return false;
-    }
 
     //open file
     FILE *fp;
@@ -35,69 +24,16 @@ bool load(const char *filename, Matrix *A, Vector *b, Vector *x) {
         return false;
     }
 
-    /*
-     * count lines and columns
-     * verify that data is valid
-     */
+    bool startVectExists;
+    int lines;
 
-    int lines = 0;
-    int columns = 0;
-    int prevcolumns = 0;
-    int temp = 0;
-    bool firstLine = true;
-    bool lineWithData = false;
+    bool countSuccess = coVal(fp, &lines, &startVectExists);
+    if (!countSuccess) return false;
 
-    while (temp != EOF) {
-
-        temp = fgetc(fp);
-
-        if (temp == ',') {
-
-            columns++;
-            lineWithData = true;
-
-        } else if (temp == '\n' && lineWithData == true) {
-
-            lines++;
-            lineWithData = false;
-
-            if (firstLine == true) {
-
-                prevcolumns = columns;
-                columns = 0;
-                firstLine = false;
-            } else if (prevcolumns != columns) {
-
-                printf("Daten ungueltig\n");
-                return false;
-            } else columns = 0; //end if
-        }//end if
-    }//end while
-
-    //necessary if there is no word wrap at end of file
-    if (lineWithData == true) {
-
-        lines++;
-
-        if (prevcolumns != columns) {
-
-            printf("Daten ungueltig\n");
-            return false;
-        } //end if
-    }//end if
-
-    columns = prevcolumns + 1;
-    if (lines + 1 != columns && lines + 2 != columns) {
-
-        printf("Daten ungueltig\n");
-        return false;
-    }
-
-    /*
-     * init matrix
-     */
-
+    //init matrix
     double **matrix = malloc(lines * sizeof(double *));
+    double *solutions = malloc(lines * sizeof(double));
+    double *startVect = malloc(lines * sizeof(double));
 
     for (int i = 0; i < lines; i++) {
 
@@ -105,67 +41,13 @@ bool load(const char *filename, Matrix *A, Vector *b, Vector *x) {
         matrix[i] = xCoefficients;
     }
 
-    double *solutions = malloc(lines * sizeof(double));
-    double *startVect = malloc(lines * sizeof(double));
-
-    /*
-     * load data
-     */
-
     //go to beginning of file
-    fseek(fp, 0, SEEK_SET);
+    rewind(fp);
 
-    //go through file
-    for (int z = 0; z < lines; z++) {
-        double tempData = 0;
-        int nextChar = 0;
+    bool loadSuccess = loadData(fp, lines, startVectExists, matrix, solutions, startVect);
+    if (!loadSuccess) return false;
 
-        //save xCoefficients
-        for (int s = 0; s < lines; s++) {
-
-            fscanf(fp, "%lf", &tempData);
-
-            //ignore whitespaces
-            do {
-                nextChar = fgetc(fp);
-            } while (nextChar != ',');
-
-            matrix[z][s] = tempData;
-            tempData = 0;
-        }
-
-        //save solutions
-        fscanf(fp, "%lf", &tempData);
-        solutions[z] = tempData;
-        tempData = 0;
-
-        //save starting Vectors if existing
-        if (columns == lines + 2) {
-
-            //ignore whitespaces and word wrap
-            do {
-                nextChar = fgetc(fp);
-            } while (nextChar != ',' && nextChar != '\n' && nextChar != EOF);
-
-            fscanf(fp, "%lf", &tempData);
-            startVect[z] = tempData;
-            tempData = 0;
-
-        } else {
-
-            startVect[z] = 0;
-        }
-
-        //ignore whitespaces and word wrap
-        do {
-            nextChar = fgetc(fp);
-        } while (nextChar != ',' && nextChar != '\n' && nextChar != EOF);
-    }
-
-    /*
-     * Assign the values
-     */
-
+    //assign data
     *A = (Matrix) {.n = lines, .data =  matrix};
     *b = (Vector) {.n = lines, .data = solutions};
     *x = (Vector) {.n = lines, .data = startVect};
@@ -173,4 +55,119 @@ bool load(const char *filename, Matrix *A, Vector *b, Vector *x) {
     fclose(fp);
 
     return true;
+}
+
+/*
+ * This method counts the lines and columns of the LGS.
+ * Empty lines are ignored.
+ * It also tests if the LGS has a correct form.
+ * @param *filename: name/path of the .csv file to load
+ * @param *columns: number of columns of the LGS
+ * @param *startVectExists: true if the start values are specified, false if not
+ * @return: true if successful, false if any error occurred
+ */
+bool coVal (FILE *fpc, int *lines, bool *startVectExists) {
+
+    int cLines = 0, cColumns = 0, prevColumns = 0;
+    int temp = 0;
+    bool firstLine = true, firstCommaInLine = true;
+
+    while (temp != EOF) {
+
+        temp = fgetc(fpc);
+
+        if (temp == ',') {
+
+            cColumns++;
+            //only count line if there is at least one comma in it
+            if (firstCommaInLine == true) {
+                cLines++;
+                firstCommaInLine = false;
+            }//end if
+
+        } else if ( (temp == '\n' || temp == EOF) && cColumns != 0) {
+
+            firstCommaInLine = true;
+            //there is one more column then commas
+            cColumns++;
+            if (firstLine == true) {
+
+                prevColumns = cColumns;
+                cColumns = 0;
+                firstLine = false;
+            } else if (prevColumns != cColumns) {
+
+                printf("Daten ungueltig\n");
+                return false;
+            } else cColumns = 0; //end if
+        }//end if
+    }//end while
+
+    if (cLines + 1 == prevColumns) *startVectExists = false;
+    else if (cLines + 2 == prevColumns) *startVectExists = true;
+    else return false;
+
+    *lines = cLines;
+    return true;
+}
+
+/*
+ * This method stores the values of the LGS in a matrix and two vectors
+ * Empty values (',  ,') are ignored.
+ * @param *fp: FILE Pointer of the file containing the LGS
+ * @param lines: number of lines of the LGS
+ * @param startVectExists: true if the LGS contains start values
+ * @param **matrix: pointer to a matrix
+ * @param *solutions: pointer to a vector
+ * @param *startVect: pointer to a vector
+ * @return bool: true if succesful
+ */
+bool loadData(FILE *fp, int lines, bool startVectExists, double **matrix, double *solutions, double *startVect) {
+    double tempData = 0;
+
+    //go through file
+    for (int i1 = 0; i1 < lines; i1++) {
+
+        //store xCoefficients
+        for (int i2 = 0; i2 < lines; i2++) {
+
+            fscanf(fp, "%lf", &tempData);
+            matrix[i1][i2] = tempData;
+            tempData = 0;
+
+            nextSepChar(fp);
+        }//end for
+
+        //store solutions
+        fscanf(fp, "%lf", &tempData);
+        solutions[i1] = tempData;
+        tempData = 0;
+
+        nextSepChar(fp);
+
+        //store starting Vectors if existing
+        if (startVectExists) {
+
+            fscanf(fp, "%lf", &tempData);
+            startVect[i1] = tempData;
+            tempData = 0;
+
+            nextSepChar(fp);
+        } else startVect[i1] = 0;//end if
+    }//end for
+
+    return true;
+}
+
+/*
+ * This method gets the next seperating char (',' ; '\n' ; EOF) in the file.
+ * @param *fpn: FILE Pointer to the file containing the LGS
+ * @return void
+ */
+void nextSepChar(FILE *fpn) {
+    int temp;
+
+    do {
+        temp = fgetc(fpn);
+    } while (temp != ',' && temp != '\n' && temp != EOF);
 }
