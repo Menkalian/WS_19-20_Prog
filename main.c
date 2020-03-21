@@ -205,6 +205,9 @@ Vector *solveLGS(Matrix *A, Vector *b, Vector *x, double e,
     if (!(vectorDistance(newX[1], newX[0]) <= e || iterationsCounter > 100)) {
         return solveLGS(A, b, newX, e, f);
     }
+    if(iterationsCounter > 100){
+        printf("Fehlerschranke wurde nach 100 Iterationen nicht unterschritten. Möglicherweise konvergieren die Werte nicht. Beende Berechnung!\n");
+    }
     return newX;
 }
 
