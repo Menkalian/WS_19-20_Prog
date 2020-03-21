@@ -5,7 +5,7 @@ Vector *solve(Method method, Matrix *A, Vector *b, Vector *x, double e);
 
 void solveJ(Matrix *A, Vector *b, Vector *newX, Vector *oldX);  // JACOBI
 void solveGS(Matrix *A, Vector *b, Vector *newX, Vector *oldX); // GAUSS_SEIDEL
-Vector *solveLGS(Matrix *A, Vector *b, Vector *x, double e, void (*f)(Matrix *, Vector *, Vector *, Vector *));
+void solveLGS(Matrix *A, Vector *b, ListElement *x, double e, void (*f)(Matrix *, Vector *, Vector *, Vector *));
 
 double calculateScalar(Vector *v1, Vector *v2, int indexToIgnore);
 
@@ -157,13 +157,23 @@ int main() {
  * @return: Array of all iteration steps as vector. index 0 is the solution.
  */
 Vector *solve(Method method, Matrix *A, Vector *b, Vector *x, double e) {
-    Vector *toRet;
+    ListElement* start = (ListElement*)calloc(1, sizeof(ListElement));
+    start->vector = *x;
+    start->last = NULL;
+    start->next = NULL;
 
     if (method == JACOBI) { // == JACOBI
-        toRet = solveLGS(A, b, x, e, solveJ);
+      solveLGS(A, b, start, e, solveJ);
     } else { // == GAUSS_SEIDEL
-        toRet = solveLGS(A, b, x, e, solveGS);
+      solveLGS(A, b, start, e, solveGS);
     }
+
+    int listLength = getListLength(start);
+    Vector *toRet = (Vector*)calloc(1, listLength * sizeof(Vector));
+    convertListToArray(toRet, start, listLength);
+
+    //deleteChainedList(start);
+
     return toRet;
 }
 
@@ -176,39 +186,36 @@ Vector *solve(Method method, Matrix *A, Vector *b, Vector *x, double e) {
  * @param f : method to calculate the next iterationstep
  * @return: Array of all iteration steps as vector. index 0 is the solution.
  */
-Vector *solveLGS(Matrix *A, Vector *b, Vector *x, double e,
-                 void (*f)(Matrix *, Vector *, Vector *, Vector *)) {
-    // Create counter variable
-    static int iterationsCounter = 1;
+ void solveLGS(Matrix *A, Vector *b, ListElement *x, double e,
+                  void (*f)(Matrix *, Vector *, Vector *, Vector *)) {
+     // Create counter variable
+     static int iterationsCounter = 0;
 
-    // Copy pointer
-    Vector *newX = (Vector *) malloc((iterationsCounter + 1) * sizeof(Vector));
-    for (int i = 1; i < (iterationsCounter + 1); i++) {
-        newX[i] = x[i - 1];
-    }
-    size_t dataLength = sizeof(double) * b->n;
-    newX[0].n = b->n;
-    newX[0].data = (double *) malloc(dataLength);
-    memcpy(newX[0].data, newX[1].data, dataLength);
+     // Add new element to list
+     ListElement* newElement = (ListElement*)calloc(1, (sizeof(ListElement)));
+     x->next = newElement;
+     newElement->next = NULL;
+     newElement->last = x;
 
-    // Free old x
-    free(x);
-    x = newX;
+     newElement->vector = x->vector;
+     size_t dataLength = newElement->vector.n * sizeof(double);
+     double* newData = (double*)calloc(1, dataLength);
+     memcpy(newData, (x->vector).data, dataLength);
+     (newElement->vector).data = newData;
 
-    // Calculating new x vector
-    f(A, b, &newX[0], &newX[1]);
+     // Calculating new x vector
+     f(A, b, &newElement->vector, &x->vector);
 
-    // Increment counter and free last x vector
-    iterationsCounter++;
+     // Increment counter and free last x vector
+     iterationsCounter++;
 
-    // Check vector distance
-    if (!(vectorDistance(newX[1], newX[0]) <= e || iterationsCounter > 100)) {
-        return solveLGS(A, b, newX, e, f);
-    }
-    if(iterationsCounter > 100){
+     // Check vector distance
+     if (!(vectorDistance(x->vector, newElement->vector) <= e
+           || iterationsCounter > 100)) {
+         solveLGS(A, b, newElement, e, f);
+     } else if (iterationsCounter > 100) {
         printf("\n**Fehlerschranke wurde nach 100 Iterationen nicht unterschritten.**\nMöglicherweise konvergieren die Werte nicht. Beende Berechnung!\n");
-    }
-    return newX;
+     }
 }
 
 /*
