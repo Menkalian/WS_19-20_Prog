@@ -1,7 +1,7 @@
 #include "utils.h"
 
 //Functions
-bool coVal(const char *filename, int *columns, bool *startVectExists);
+bool coVal(FILE *fpc, int *columns, bool *startVectExists);
 bool loadData(FILE *fp, int lines, bool startVectExists, double **matrix, double *solutions, double *startVect);
 void nextSepChar(FILE *fpn);
 
@@ -27,7 +27,7 @@ bool load(const char *filename, Matrix *A, Vector *b, Vector *x) {
     bool startVectExists;
     int lines;
 
-    bool countSuccess = coVal(filename, &lines, &startVectExists);
+    bool countSuccess = coVal(fp, &lines, &startVectExists);
     if (!countSuccess) return false;
 
     //init matrix
@@ -40,6 +40,9 @@ bool load(const char *filename, Matrix *A, Vector *b, Vector *x) {
         double *xCoefficients = malloc(lines * sizeof(double));
         matrix[i] = xCoefficients;
     }
+
+    //go to beginning of file
+    rewind(fp);
 
     bool loadSuccess = loadData(fp, lines, startVectExists, matrix, solutions, startVect);
     if (!loadSuccess) return false;
@@ -63,14 +66,7 @@ bool load(const char *filename, Matrix *A, Vector *b, Vector *x) {
  * @param *startVectExists: true if the start values are specified, false if not
  * @return: true if successful, false if any error occurred
  */
-bool coVal (const char *filename, int *lines, bool *startVectExists) {
-
-    FILE *fpc;
-    fpc = fopen(filename, "r");
-
-    if (fpc == NULL) {
-        return false;
-    }
+bool coVal (FILE *fpc, int *lines, bool *startVectExists) {
 
     int cLines = 0, cColumns = 0, prevColumns = 0;
     int temp = 0;
@@ -106,8 +102,6 @@ bool coVal (const char *filename, int *lines, bool *startVectExists) {
             } else cColumns = 0; //end if
         }//end if
     }//end while
-
-    fclose(fpc);
 
     if (cLines + 1 == prevColumns) *startVectExists = false;
     else if (cLines + 2 == prevColumns) *startVectExists = true;
