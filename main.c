@@ -172,7 +172,7 @@ Vector *solve(Method method, Matrix *A, Vector *b, Vector *x, double e) {
     Vector *toRet = (Vector*)calloc(1, listLength * sizeof(Vector));
     convertListToArray(toRet, start, listLength);
 
-    //deleteChainedList(start);
+    deleteChainedList(start);
 
     return toRet;
 }
@@ -202,7 +202,7 @@ Vector *solve(Method method, Matrix *A, Vector *b, Vector *x, double e) {
      double* newData = (double*)calloc(1, dataLength);
      memcpy(newData, (x->vector).data, dataLength);
      (newElement->vector).data = newData;
-     
+
      // Calculating new x vector
      f(A, b, &newElement->vector, &x->vector);
 
