@@ -206,7 +206,7 @@ Vector *solveLGS(Matrix *A, Vector *b, Vector *x, double e,
         return solveLGS(A, b, newX, e, f);
     }
     if(iterationsCounter > 100){
-        printf("Fehlerschranke wurde nach 100 Iterationen nicht unterschritten. Möglicherweise konvergieren die Werte nicht. Beende Berechnung!\n");
+        printf("\n**Fehlerschranke wurde nach 100 Iterationen nicht unterschritten.**\nMöglicherweise konvergieren die Werte nicht. Beende Berechnung!\n");
     }
     return newX;
 }
