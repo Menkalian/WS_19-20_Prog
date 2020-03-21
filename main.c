@@ -113,8 +113,8 @@ int main() {
         if (c == 'j' || c == 'J') {
             // PRINT ALL
             printf("Die Iterationsschritte sind: \n");
-            for (int i = 1; i <= number; ++i) {
-                printf("%d)\t", i);
+            for (int i = 0; i <= number; ++i) {
+                printf("%d)\t", i + 1);
                 vectorPrint(result[number - i]);
             }
 
@@ -202,7 +202,7 @@ Vector *solve(Method method, Matrix *A, Vector *b, Vector *x, double e) {
      double* newData = (double*)calloc(1, dataLength);
      memcpy(newData, (x->vector).data, dataLength);
      (newElement->vector).data = newData;
-
+     
      // Calculating new x vector
      f(A, b, &newElement->vector, &x->vector);
 
