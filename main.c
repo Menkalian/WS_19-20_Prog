@@ -172,7 +172,7 @@ Vector *solve(Method method, Matrix *A, Vector *b, Vector *x, double e) {
     Vector *toRet = (Vector*)calloc(1, listLength * sizeof(Vector));
     convertListToArray(toRet, start, listLength);
 
-    deleteChainedList(start);
+    //deleteChainedList(start);
 
     return toRet;
 }
@@ -211,7 +211,7 @@ Vector *solve(Method method, Matrix *A, Vector *b, Vector *x, double e) {
 
      // Check vector distance
      if (!(vectorDistance(x->vector, newElement->vector) <= e
-           || iterationsCounter > 100)) {
+           || iterationsCounter >= 100)) {
          solveLGS(A, b, newElement, e, f);
      } else if (iterationsCounter > 100) {
         printf("\n**Fehlerschranke wurde nach 100 Iterationen nicht unterschritten.**\nMöglicherweise konvergieren die Werte nicht. Beende Berechnung!\n");
