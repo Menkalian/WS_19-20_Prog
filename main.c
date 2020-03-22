@@ -123,7 +123,7 @@ int main() {
                 printf("Keine Gültige Angabe. Es wird NEIN als Antwort angenommen.\n");
 
             // Just print the final result
-            printf("Das Ergebnis ist: \n");
+            printf("Das Ergebnis des letzten Iterationsschritts ist: \n");
             vectorPrint(result[0]);
         }
 
