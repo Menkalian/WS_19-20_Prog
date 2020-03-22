@@ -36,4 +36,3 @@ int getListLength(ListElement* startElement);
 void convertListToArray(Vector* vectorArray, ListElement* listStartElement,
                         int length);
 ListElement* getLastListElement(ListElement* startElement);
-void deleteChainedList(ListElement* startElement);
