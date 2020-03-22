@@ -52,6 +52,10 @@ double calculateScalar(Vector *v1, Vector *v2, int indexToIgnore) {
     return scalar;
 }
 
+/*
+ * This method count the number of list elements
+ * @param: startElement: Head of a chained list
+ */
 int getListLength(ListElement* startElement) {
   static int length = 0;
   if (startElement->next != NULL) {
@@ -62,6 +66,10 @@ int getListLength(ListElement* startElement) {
   }
 }
 
+/*
+ * This method returns the last element of a chained list
+ * @param: startElement: Head of a chained list
+ */
 ListElement* getLastListElement(ListElement* startElement) {
   if (startElement->next != NULL) {
     return getLastListElement(startElement->next);
@@ -70,6 +78,12 @@ ListElement* getLastListElement(ListElement* startElement) {
   }
 }
 
+/*
+ * This method converts chained lists into arrays
+ * @param: vectorArray: Initialized array
+ * @param: listStartElement: Head of a chained list
+ * @param: length: Length of array
+ */
 void convertListToArray(Vector* vectorArray, ListElement* listStartElement,
                         int length) {
   ListElement* lastElement = getLastListElement(listStartElement);
@@ -79,12 +93,5 @@ void convertListToArray(Vector* vectorArray, ListElement* listStartElement,
 
     lastElement = lastElement->last;
     free(lastElement->next);
-  }
-}
-
-void deleteChainedList(ListElement* startElement) {
-  while (startElement->next != NULL) {
-    startElement = startElement->next;
-    free(startElement->last);
   }
 }
