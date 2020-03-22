@@ -157,6 +157,8 @@ int main() {
  * @return: Array of all iteration steps as vector. index 0 is the solution.
  */
 Vector *solve(Method method, Matrix *A, Vector *b, Vector *x, double e) {
+
+    // Creating list head
     ListElement* start = (ListElement*)calloc(1, sizeof(ListElement));
     start->vector = *x;
     start->last = NULL;
@@ -168,11 +170,10 @@ Vector *solve(Method method, Matrix *A, Vector *b, Vector *x, double e) {
       solveLGS(A, b, start, e, solveGS);
     }
 
+    // Convert list to array
     int listLength = getListLength(start);
     Vector *toRet = (Vector*)calloc(1, listLength * sizeof(Vector));
     convertListToArray(toRet, start, listLength);
-
-    //deleteChainedList(start);
 
     return toRet;
 }
